@@ -19,7 +19,7 @@ public class DataProducerApplication {
 
     @Bean
     public CommandLineRunner startProducer() {
-        return args -> dataProducerService.startServer();
+        return args -> dataProducerService.startSocketServer();
     }
 }
 

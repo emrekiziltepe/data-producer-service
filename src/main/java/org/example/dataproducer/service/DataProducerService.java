@@ -1,42 +1,69 @@
 package org.example.dataproducer.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Random;
 
 @Service
 @Slf4j
 public class DataProducerService {
 
-    public void startServer() {
-        try (ServerSocket serverSocket = new ServerSocket(9090)) {
-            System.out.println("Server started on port 9090...");
-            while (true) {
-                var socket = serverSocket.accept();
-                new Thread(() -> handleClient(socket)).start();
+    @Value("${socket.port}")
+    private int port;
+
+    private final Random random = new Random();
+
+    public void startSocketServer() {
+        new Thread(() -> {
+            try (ServerSocket serverSocket = new ServerSocket(port)) {
+                System.out.println("Socket server started on port " + port);
+                while (true) {
+                    var socket = serverSocket.accept();
+                    System.out.println("Client connected: " + socket.getInetAddress());
+                    handleClient(socket);
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        }).start();
     }
 
     private void handleClient(Socket socket) {
-        try (PrintWriter writer = new PrintWriter(socket.getOutputStream(), true)) {
-            while (true) {
-                var timestamp = System.currentTimeMillis();
-                var randomValue = (int) (Math.random() * 101);
-                var hash = DigestUtils.md5DigestAsHex((timestamp + "" + randomValue).getBytes());
-                var data = timestamp + "," + randomValue + "," + hash.substring(hash.length() - 2);
-                System.out.println(randomValue);
-                writer.println(data);
-                Thread.sleep(200);
+        new Thread(() -> {
+            try (var writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true)) {
+                while (!socket.isClosed()) {
+                    writer.println(generateRandomData());
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
             }
+        }).start();
+    }
+
+    @Scheduled(fixedRate = 200)
+    public void generateAndSendData() {
+        try (var socket = new Socket("localhost", port);
+             var writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true)) {
+            var data = generateRandomData();
+            System.out.println(data);
+            writer.println(data);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
         }
+    }
+
+    String generateRandomData() {
+        var timestamp = System.currentTimeMillis();
+        var randomValue = random.nextInt(101);
+        var hash = DigestUtils.md5DigestAsHex((timestamp + "" + randomValue).getBytes());
+        return timestamp + "," + randomValue + "," + hash.substring(hash.length() - 2);
     }
 }

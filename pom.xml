@@ -15,9 +15,6 @@
     <properties>
         <java.version>21</java.version>
         <spring.boot.version>3.3.4</spring.boot.version>
-        <spring.doc.version>2.6.0</spring.doc.version>
-        <jacoco.version>0.8.12</jacoco.version>
-        <spring.boot.starter.web.version>3.4.0</spring.boot.starter.web.version>
     </properties>
     <dependencies>
         <dependency>
@@ -70,27 +67,6 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                        <configuration>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
         <finalName>data-producer-app</finalName>
