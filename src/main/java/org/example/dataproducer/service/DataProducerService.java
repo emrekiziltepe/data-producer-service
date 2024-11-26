@@ -2,7 +2,6 @@ package org.example.dataproducer.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
@@ -25,28 +24,26 @@ public class DataProducerService {
         new Thread(() -> {
             try (var serverSocket = new ServerSocket(port)) {
                 System.out.println("Socket server started on port " + port);
-                while (true) {
-                    var socket = serverSocket.accept();
-                    System.out.println("Client connected: " + socket.getInetAddress());
-                    handleClient(socket);
-                }
+                var socket = serverSocket.accept();
+                System.out.println("Client connected: " + socket.getInetAddress());
+                handleClient(socket);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
         }).start();
     }
 
-    @Scheduled(fixedRate = 200)
     private void handleClient(Socket socket) {
-        new Thread(() -> {
-            try (var writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true)) {
-                while (!socket.isClosed()) {
-                    writer.println(generateRandomData());
-                }
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
+        try (var writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true)) {
+            while (!socket.isClosed()) {
+                var data = generateRandomData();
+                System.out.println(data);
+                writer.println(data);
+                Thread.sleep(5000);
             }
-        }).start();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
     String generateRandomData() {
