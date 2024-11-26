@@ -23,7 +23,7 @@ public class DataProducerService {
 
     public void startSocketServer() {
         new Thread(() -> {
-            try (ServerSocket serverSocket = new ServerSocket(port)) {
+            try (var serverSocket = new ServerSocket(port)) {
                 System.out.println("Socket server started on port " + port);
                 while (true) {
                     var socket = serverSocket.accept();
@@ -36,6 +36,7 @@ public class DataProducerService {
         }).start();
     }
 
+    @Scheduled(fixedRate = 200)
     private void handleClient(Socket socket) {
         new Thread(() -> {
             try (var writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true)) {
@@ -46,18 +47,6 @@ public class DataProducerService {
                 log.error(e.getMessage(), e);
             }
         }).start();
-    }
-
-    @Scheduled(fixedRate = 200)
-    public void generateAndSendData() {
-        try (var socket = new Socket("localhost", port);
-             var writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true)) {
-            var data = generateRandomData();
-            System.out.println(data);
-            writer.println(data);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
     }
 
     String generateRandomData() {
